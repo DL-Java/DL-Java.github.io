@@ -2179,7 +2179,7 @@ body {
     
       .brand {
         font-weight: bold;
-        transform: scale(2);
+        transform: scale(1);
       }.main-title, .brand {
       color: #FFF !important;
     }
