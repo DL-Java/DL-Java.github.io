@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>小白博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1596543360985">
+<link rel="shortcut icon" href="/favicon.ico?v=1596543718395">
 <link rel="stylesheet" href="/media/css/pisces.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -504,9 +504,9 @@ SimpleDateFormat 的 parse 方法调用 CalendarBuilder 的 establish 方法，�
 establish 方法内部先清空 Calendar 再构建 Calendar，整个操作没有加锁。&lt;/p&gt;
 &lt;p&gt;所以，如果多线程池调用 parse 方法，也就意味着多线程在并发操作一个 Calendar，可能会产生一个线程还没来得及处理 Calendar 就被另一个线程清空了的情况。&lt;br&gt;
 因此只能在同一个线程复用 SimpleDateFormat。&lt;br&gt;
-当然也有解决这个方法，那就是通过 ThreadLocal 来存放 SimpleDateFormat，代码如下：&lt;br&gt;
-&lt;code&gt;private static ThreadLocal&amp;lt;SimpleDateFormat&amp;gt; threadSafeSimpleDateFormat = ThreadLocal.withInitial(() -&amp;gt; new SimpleDateFormat(&amp;quot;yyyy-MM-dd HH:mm:ss&amp;quot;));&lt;/code&gt;&lt;br&gt;
-综合以上，我的解决方式是使用DateTimeFormatter。&lt;br&gt;
+当然也有解决这个方法，那就是通过 ThreadLocal 来存放 SimpleDateFormat，代码如下：&lt;/p&gt;
+&lt;!-- private static ThreadLocal&lt;SimpleDateFormat&gt; threadSafeSimpleDateFormat = ThreadLocal.withInitial(() -&gt; new SimpleDateFormat(&#34;yyyy-MM-dd HH:mm:ss&#34;)); --&gt;
+&lt;p&gt;综合以上，我的解决方式是使用DateTimeFormatter。&lt;br&gt;
 DateTimeFormatter的好处如下：&lt;br&gt;
 1、DateTimeFormatterBuilder是线程安全的，&lt;br&gt;
 2、使用 DateTimeFormatterBuilder 来定义格式化字符串，不用去记忆使用大写的 Y 还是小写的 Y，大写的 M 还是小写的 m。&lt;br&gt;
@@ -515,11 +515,11 @@ DateTimeFormatter的好处如下：&lt;br&gt;
 &lt;img src=&#34;https://dl-java.github.io//post-images/1596540632764.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;/p&gt;
 &lt;p&gt;在这里还需要注意的是：计算两个时间差的时候，使用ChronoUnit.DAYS.between即可。&lt;/p&gt;
 &lt;p&gt;这里有个需要注意的是：&lt;br&gt;
-Java 8 中有一个专门的类 Period 定义了日期间隔，通过 Period.between 可以得到两个 LocalDate 的差，返回的是两个日期差几年零几月零几天。如果希望得知两个日期之间差几天，直接调用 Period 的 getDays() 方法得到的只是最后的“零几天”，而不是算总的间隔天数。&lt;br&gt;
+Java 8 中有一个专门的类 Period 定义了日期间隔，通过 Period.between 可以得到两个 LocalDate 的差，返回的是两个日期差几年零几月零几天。如果希望得知两个日期之间差几天，直接调用&lt;br&gt;
+Period 的 getDays() 方法得到的只是最后的“零几天”，而不是算总的间隔天数。&lt;br&gt;
 &lt;img src=&#34;https://dl-java.github.io//post-images/1596542735730.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;br&gt;
-&lt;img src=&#34;https://dl-java.github.io//post-images/1596542781345.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;                          技术参考：朱晔 贝壳金服资深架构师   Java业务开发常见错误
-&lt;/code&gt;&lt;/pre&gt;
+&lt;img src=&#34;https://dl-java.github.io//post-images/1596542781345.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;br&gt;
+技术参考：朱晔 贝壳金服资深架构师   Java业务开发常见错误&lt;/p&gt;
 ">代码优化--变量加工之用好Java 8的日期时间类</a>
       </div>
       
