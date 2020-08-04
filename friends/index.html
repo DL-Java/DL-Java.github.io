@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>小白博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1594970694753">
+<link rel="shortcut icon" href="/favicon.ico?v=1596543008475">
 <link rel="stylesheet" href="/media/css/pisces.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -184,7 +184,7 @@
     <div class="sidebar-item-box">
       <a href="/archives/">
         
-        <span class="site-item-stat-count">2</span>
+        <span class="site-item-stat-count">3</span>
         <span class="site-item-stat-name language" data-lan="article">文章</span>
       </a>
     </div>
@@ -466,6 +466,45 @@
       <hr>
     </div>
     <div class="result" id="result">
+      
+      <div class="item">
+        <a class="result-title" style="opacity: 0;" href="https://dl-java.github.io/post/dai-ma-you-hua-bian-liang-jia-gong-zhi-yong-hao-java-8-de-ri-qi-shi-jian-lei/"" data-c="
+          &lt;p&gt;大多数项目里，在处理时间需求的时候，大多使用的是Date、Calender和SimpleDateFormat，来声明时间戳、使用日历处理时间和格式化解析日期时间。但是这些类的API有很多缺点，如可读性差、易用性差、使用起来繁琐冗余，而且线程不安全。&lt;br&gt;
+我在变量加工的项目中遇到的代码如下：&lt;br&gt;
+&lt;img src=&#34;https://dl-java.github.io//post-images/1596537436167.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;br&gt;
+此段代码主要的意思就是调取接口获取到数据层的时间，与当前时间做减法，得到一个时间范围。但是代码对时间方面的处理存在很大的问题。&lt;br&gt;
+1、&lt;img src=&#34;https://dl-java.github.io//post-images/1596538011673.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;br&gt;
+当前时间是时间戳，是精确到秒的。&lt;br&gt;
+从数据层取到的时间数据是2019-07-26T14:02:21.686Z，然后经过一系列处理，最后转换成时间戳之前的时间是：Fri Jul 26 00:00:00 CST 2019。&lt;br&gt;
+所以第一个问题：求得的时间范围不准确&lt;/p&gt;
+&lt;p&gt;2、代码中使用的SimpleDateFormat可能出现线程安全的问题。&lt;br&gt;
+SimpleDateFormat的作用是定义解析和格式化日期时间的模式，看起来是一次性的工作，应该复用，但它的解析和格式化操作是非线程安全的。源码分析如下：&lt;br&gt;
+&lt;img src=&#34;https://dl-java.github.io//post-images/1596539384698.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;br&gt;
+如图所示：SimpleDateFormat 继承了 DateFormat，DateFormat 有一个字段 Calendar。&lt;br&gt;
+&lt;img src=&#34;https://dl-java.github.io//post-images/1596539917373.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;br&gt;
+SimpleDateFormat 的 parse 方法调用 CalendarBuilder 的 establish 方法，来构建 Calendar；&lt;br&gt;
+&lt;img src=&#34;https://dl-java.github.io//post-images/1596540087466.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;br&gt;
+establish 方法内部先清空 Calendar 再构建 Calendar，整个操作没有加锁。&lt;/p&gt;
+&lt;p&gt;所以，如果多线程池调用 parse 方法，也就意味着多线程在并发操作一个 Calendar，可能会产生一个线程还没来得及处理 Calendar 就被另一个线程清空了的情况。&lt;br&gt;
+因此只能在同一个线程复用 SimpleDateFormat。&lt;br&gt;
+当然也有解决这个方法，那就是通过 ThreadLocal 来存放 SimpleDateFormat，代码如下：&lt;br&gt;
+&lt;code&gt;private static ThreadLocal&amp;lt;SimpleDateFormat&amp;gt; threadSafeSimpleDateFormat = ThreadLocal.withInitial(() -&amp;gt; new SimpleDateFormat(&amp;quot;yyyy-MM-dd HH:mm:ss&amp;quot;));&lt;/code&gt;&lt;br&gt;
+综合以上，我的解决方式是使用DateTimeFormatter。&lt;br&gt;
+DateTimeFormatter的好处如下：&lt;br&gt;
+1、DateTimeFormatterBuilder是线程安全的，&lt;br&gt;
+2、使用 DateTimeFormatterBuilder 来定义格式化字符串，不用去记忆使用大写的 Y 还是小写的 Y，大写的 M 还是小写的 m。&lt;br&gt;
+3、DateTimeFormatter 的解析比较严格，需要解析的字符串和格式不匹配时，会直接报错。&lt;/p&gt;
+&lt;p&gt;以下是我的优化代码：&lt;br&gt;
+&lt;img src=&#34;https://dl-java.github.io//post-images/1596540632764.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;/p&gt;
+&lt;p&gt;在这里还需要注意的是：计算两个时间差的时候，使用ChronoUnit.DAYS.between即可。&lt;/p&gt;
+&lt;p&gt;这里有个需要注意的是：&lt;br&gt;
+Java 8 中有一个专门的类 Period 定义了日期间隔，通过 Period.between 可以得到两个 LocalDate 的差，返回的是两个日期差几年零几月零几天。如果希望得知两个日期之间差几天，直接调用 Period 的 getDays() 方法得到的只是最后的“零几天”，而不是算总的间隔天数。&lt;br&gt;
+&lt;img src=&#34;https://dl-java.github.io//post-images/1596542735730.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;br&gt;
+&lt;img src=&#34;https://dl-java.github.io//post-images/1596542781345.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;                          技术参考：朱晔 贝壳金服资深架构师   Java业务开发常见错误
+&lt;/code&gt;&lt;/pre&gt;
+">代码优化--变量加工之用好Java 8的日期时间类</a>
+      </div>
       
       <div class="item">
         <a class="result-title" style="opacity: 0;" href="https://dl-java.github.io/post/di-yi-pian-ce-shi/"" data-c="

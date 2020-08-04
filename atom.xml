@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://dl-java.github.io/</id>
     <title>小白博客</title>
-    <updated>2020-07-17T07:24:59.935Z</updated>
+    <updated>2020-08-04T12:10:21.026Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://dl-java.github.io/"/>
     <link rel="self" href="https://dl-java.github.io/atom.xml"/>
@@ -10,6 +10,48 @@
     <logo>https://dl-java.github.io/images/avatar.png</logo>
     <icon>https://dl-java.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, 小白博客</rights>
+    <entry>
+        <title type="html"><![CDATA[代码优化--变量加工之用好Java 8的日期时间类]]></title>
+        <id>https://dl-java.github.io/post/dai-ma-you-hua-bian-liang-jia-gong-zhi-yong-hao-java-8-de-ri-qi-shi-jian-lei/</id>
+        <link href="https://dl-java.github.io/post/dai-ma-you-hua-bian-liang-jia-gong-zhi-yong-hao-java-8-de-ri-qi-shi-jian-lei/">
+        </link>
+        <updated>2020-08-04T10:25:53.000Z</updated>
+        <content type="html"><![CDATA[<p>大多数项目里，在处理时间需求的时候，大多使用的是Date、Calender和SimpleDateFormat，来声明时间戳、使用日历处理时间和格式化解析日期时间。但是这些类的API有很多缺点，如可读性差、易用性差、使用起来繁琐冗余，而且线程不安全。<br>
+我在变量加工的项目中遇到的代码如下：<br>
+<img src="https://dl-java.github.io//post-images/1596537436167.jpg" alt="" loading="lazy"><br>
+此段代码主要的意思就是调取接口获取到数据层的时间，与当前时间做减法，得到一个时间范围。但是代码对时间方面的处理存在很大的问题。<br>
+1、<img src="https://dl-java.github.io//post-images/1596538011673.jpg" alt="" loading="lazy"><br>
+当前时间是时间戳，是精确到秒的。<br>
+从数据层取到的时间数据是2019-07-26T14:02:21.686Z，然后经过一系列处理，最后转换成时间戳之前的时间是：Fri Jul 26 00:00:00 CST 2019。<br>
+所以第一个问题：求得的时间范围不准确</p>
+<p>2、代码中使用的SimpleDateFormat可能出现线程安全的问题。<br>
+SimpleDateFormat的作用是定义解析和格式化日期时间的模式，看起来是一次性的工作，应该复用，但它的解析和格式化操作是非线程安全的。源码分析如下：<br>
+<img src="https://dl-java.github.io//post-images/1596539384698.jpg" alt="" loading="lazy"><br>
+如图所示：SimpleDateFormat 继承了 DateFormat，DateFormat 有一个字段 Calendar。<br>
+<img src="https://dl-java.github.io//post-images/1596539917373.jpg" alt="" loading="lazy"><br>
+SimpleDateFormat 的 parse 方法调用 CalendarBuilder 的 establish 方法，来构建 Calendar；<br>
+<img src="https://dl-java.github.io//post-images/1596540087466.jpg" alt="" loading="lazy"><br>
+establish 方法内部先清空 Calendar 再构建 Calendar，整个操作没有加锁。</p>
+<p>所以，如果多线程池调用 parse 方法，也就意味着多线程在并发操作一个 Calendar，可能会产生一个线程还没来得及处理 Calendar 就被另一个线程清空了的情况。<br>
+因此只能在同一个线程复用 SimpleDateFormat。<br>
+当然也有解决这个方法，那就是通过 ThreadLocal 来存放 SimpleDateFormat，代码如下：<br>
+<code>private static ThreadLocal&lt;SimpleDateFormat&gt; threadSafeSimpleDateFormat = ThreadLocal.withInitial(() -&gt; new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;));</code><br>
+综合以上，我的解决方式是使用DateTimeFormatter。<br>
+DateTimeFormatter的好处如下：<br>
+1、DateTimeFormatterBuilder是线程安全的，<br>
+2、使用 DateTimeFormatterBuilder 来定义格式化字符串，不用去记忆使用大写的 Y 还是小写的 Y，大写的 M 还是小写的 m。<br>
+3、DateTimeFormatter 的解析比较严格，需要解析的字符串和格式不匹配时，会直接报错。</p>
+<p>以下是我的优化代码：<br>
+<img src="https://dl-java.github.io//post-images/1596540632764.jpg" alt="" loading="lazy"></p>
+<p>在这里还需要注意的是：计算两个时间差的时候，使用ChronoUnit.DAYS.between即可。</p>
+<p>这里有个需要注意的是：<br>
+Java 8 中有一个专门的类 Period 定义了日期间隔，通过 Period.between 可以得到两个 LocalDate 的差，返回的是两个日期差几年零几月零几天。如果希望得知两个日期之间差几天，直接调用 Period 的 getDays() 方法得到的只是最后的“零几天”，而不是算总的间隔天数。<br>
+<img src="https://dl-java.github.io//post-images/1596542735730.jpg" alt="" loading="lazy"><br>
+<img src="https://dl-java.github.io//post-images/1596542781345.jpg" alt="" loading="lazy"></p>
+<pre><code>                          技术参考：朱晔 贝壳金服资深架构师   Java业务开发常见错误
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[第一篇测试]]></title>
         <id>https://dl-java.github.io/post/di-yi-pian-ce-shi/</id>
