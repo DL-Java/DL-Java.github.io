@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>小白博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1596543718395">
+<link rel="shortcut icon" href="/favicon.ico?v=1596596426384">
 <link rel="stylesheet" href="/media/css/pisces.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -517,7 +517,7 @@ establish 方法内部先清空 Calendar 再构建 Calendar，整个操作没有
 &lt;p&gt;所以，如果多线程池调用 parse 方法，也就意味着多线程在并发操作一个 Calendar，可能会产生一个线程还没来得及处理 Calendar 就被另一个线程清空了的情况。&lt;br&gt;
 因此只能在同一个线程复用 SimpleDateFormat。&lt;br&gt;
 当然也有解决这个方法，那就是通过 ThreadLocal 来存放 SimpleDateFormat，代码如下：&lt;/p&gt;
-&lt;!-- private static ThreadLocal&lt;SimpleDateFormat&gt; threadSafeSimpleDateFormat = ThreadLocal.withInitial(() -&gt; new SimpleDateFormat(&#34;yyyy-MM-dd HH:mm:ss&#34;)); --&gt;
+&lt;p&gt;private static ThreadLocal&lt;SimpleDateFormat&gt; threadSafeSimpleDateFormat = ThreadLocal.withInitial(() -&amp;gt; new SimpleDateFormat(&amp;quot;yyyy-MM-dd HH:mm:ss&amp;quot;));&lt;/p&gt;
 &lt;p&gt;综合以上，我的解决方式是使用DateTimeFormatter。&lt;br&gt;
 DateTimeFormatter的好处如下：&lt;br&gt;
 1、DateTimeFormatterBuilder是线程安全的，&lt;br&gt;
